@@ -162,7 +162,8 @@ async function scrapeVTBPage(page) {
     if (!name) continue;
     const block = html.slice(match.index, match.index + 2000);
 
-    const photoMatch = block.match(/img src="(\/media\/photos\/[^"]+)"/);
+    const photoMatch = block.match(/img src="(\/media\/photos\/([0-9a-f-]{36})\.webp)"/);
+    const photoUUID = photoMatch?.[2] ?? null;
     const badgeMatch = block.match(/data-variant="([^"]+)"/);
     const isFound = badgeMatch ? badgeMatch[1] !== "destructive" : false;
     const contentMatch = block.match(/card-content[^>]*>([\s\S]{0,300}?)<\/div>/);
@@ -177,7 +178,9 @@ async function scrapeVTBPage(page) {
       location: null,
       age: ageMatch ? parseInt(ageMatch[1]) : null,
       photo_url: photoMatch ? `https://venezuelatebusca.com${photoMatch[1]}` : null,
-      detail_url: `https://venezuelatebusca.com/?q=${encodeURIComponent(name)}`,
+      detail_url: photoUUID
+        ? `https://venezuelatebusca.com/?person=${photoUUID}`
+        : `https://venezuelatebusca.com/?query=${encodeURIComponent(name)}`,
       platform: "venezuelatebusca",
       platform_name: "Venezuela Te Busca",
     });

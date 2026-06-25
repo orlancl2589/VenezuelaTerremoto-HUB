@@ -50,7 +50,8 @@ export async function scrapeVTB(query = ""): Promise<PersonRecord[]> {
       const cardStart = match.index;
       const block = html.slice(cardStart, cardStart + 2000);
 
-      const photoMatch = block.match(/img src="(\/media\/photos\/[^"]+)"/);
+      const photoMatch = block.match(/img src="(\/media\/photos\/([0-9a-f-]{36})\.webp)"/);
+      const photoUUID = photoMatch?.[2] ?? null;
       const badgeMatch = block.match(/data-variant="([^"]+)"/);
       const isFound = badgeMatch ? badgeMatch[1] !== "destructive" : false;
       const contentMatch = block.match(/card-content[^>]*>([\s\S]{0,300}?)<\/div>/);
@@ -67,7 +68,9 @@ export async function scrapeVTB(query = ""): Promise<PersonRecord[]> {
         photo_url: photoMatch
           ? `https://venezuelatebusca.com${photoMatch[1]}`
           : null,
-        detail_url: `https://venezuelatebusca.com/?q=${encodeURIComponent(name)}`,
+        detail_url: photoUUID
+          ? `https://venezuelatebusca.com/?person=${photoUUID}`
+          : `https://venezuelatebusca.com/?query=${encodeURIComponent(name)}`,
         platform: "venezuelatebusca",
         platform_name: "Venezuela Te Busca",
       });

@@ -66,7 +66,7 @@ export default function Home() {
         <div className="h-1 bg-[#F4C300]" />
         <div className="max-w-3xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🇻🇪</span>
+            <img src="/logo.png" alt="VE Hub" className="h-12 w-12 object-contain" />
             <div>
               <h1 className="text-xl font-bold leading-tight">
                 Hub de Búsqueda — Terremoto Venezuela 2026

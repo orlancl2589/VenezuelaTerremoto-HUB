@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hub de Búsqueda — Terremoto Venezuela 2026",
   description: "Busca personas desaparecidas o a salvo en todas las plataformas de registro del terremoto en Venezuela al mismo tiempo.",
+  icons: {
+    icon: "/favicon-32x32.png",
+    shortcut: "/favicon-32x32.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

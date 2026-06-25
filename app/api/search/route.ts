@@ -31,14 +31,16 @@ async function searchDB(query: string): Promise<PersonResult[]> {
 
   if (terms.length === 0) return [];
 
-  // Build OR filter: any term appears in name_normalized
-  const filter = terms.map((t) => `name_normalized.ilike.%${t}%`).join(",");
-
-  const { data, error } = await supabase
+  // AND logic: all terms must appear in name_normalized
+  let query = supabase
     .from("persons")
-    .select("id, name, status, location, age, photo_url, detail_url, platform, platform_name")
-    .or(filter)
-    .limit(60);
+    .select("id, name, status, location, age, photo_url, detail_url, platform, platform_name");
+
+  for (const term of terms) {
+    query = query.ilike("name_normalized", `%${term}%`);
+  }
+
+  const { data, error } = await query.limit(60);
 
   if (error || !data) return [];
 

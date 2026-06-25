@@ -32,15 +32,15 @@ async function searchDB(query: string): Promise<PersonResult[]> {
   if (terms.length === 0) return [];
 
   // AND logic: all terms must appear in name_normalized
-  let query = supabase
+  let dbQuery = supabase
     .from("persons")
     .select("id, name, status, location, age, photo_url, detail_url, platform, platform_name");
 
   for (const term of terms) {
-    query = query.ilike("name_normalized", `%${term}%`);
+    dbQuery = dbQuery.ilike("name_normalized", `%${term}%`);
   }
 
-  const { data, error } = await query.limit(60);
+  const { data, error } = await dbQuery.limit(60);
 
   if (error || !data) return [];
 

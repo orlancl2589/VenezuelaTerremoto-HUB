@@ -215,7 +215,7 @@ function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip accents
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritical marks (á→a, é→e, ñ→n, ü→u)
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();

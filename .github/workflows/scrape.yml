@@ -2,16 +2,25 @@ name: Scrape missing persons data
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes
+    - cron: "*/30 * * * *"   # every 30 minutes
   workflow_dispatch:          # allow manual trigger from GitHub UI
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - name: Trigger scraper
-        run: |
-          curl -s -X POST \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -w "\nHTTP %{http_code}" \
-            https://venezuelaterremotohub.vercel.app/api/cron/scrape
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run full scraper
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/scrape-full.mjs

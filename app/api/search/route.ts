@@ -234,15 +234,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Query too short" }, { status: 400 });
   }
 
-  const [vtb, vr, dt] = await Promise.allSettled([
-    searchVenezuelaTeBusca(query),
-    searchVenezuelaReporta(query),
-    searchDesaparecidos(query),
-  ]);
+  // Source sites are accent-sensitive internally, so we search twice:
+  // once with the original query and once with the accent-stripped version.
+  // This ensures "Ramirez" finds "Ramírez" records and vice versa.
+  const queryNorm = normalize(query);
+  const queries = queryNorm !== normalize(query) || queryNorm !== query
+    ? [query, queryNorm].filter((q, i, arr) => arr.indexOf(q) === i)
+    : [query];
 
-  const getResults = (r: PromiseSettledResult<PersonResult[]>) =>
-    r.status === "fulfilled"
-      ? r.value.filter((p) => isRelevant(p.name, query))
+  const runSearch = (q: string) =>
+    Promise.allSettled([
+      searchVenezuelaTeBusca(q),
+      searchVenezuelaReporta(q),
+      searchDesaparecidos(q),
+    ]);
+
+  const [round1, round2] = await Promise.all(queries.map(runSearch));
+  const rounds = [round1, round2 ?? round1];
+
+  // Flatten all rounds, dedup by name+platform
+  const seen = new Set<string>();
+  const dedup = (results: PersonResult[]) =>
+    results.filter((r) => {
+      const key = `${r.platform}:${normalize(r.name)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  const getResults = (settled: PromiseSettledResult<PersonResult[]>) =>
+    settled.status === "fulfilled"
+      ? settled.value.filter((p) => isRelevant(p.name, query))
       : [];
 
   const getError = (r: PromiseSettledResult<PersonResult[]>) =>
@@ -250,30 +272,30 @@ export async function GET(req: NextRequest) {
       ? (r.reason as Error)?.message ?? "Error"
       : undefined;
 
-  const allResults = [
-    ...getResults(vtb),
-    ...getResults(vr),
-    ...getResults(dt),
-  ];
+  const vtbResults  = dedup([...getResults(rounds[0][0]), ...getResults(rounds[1][0])]);
+  const vrResults   = dedup([...getResults(rounds[0][1]), ...getResults(rounds[1][1])]);
+  const dtResults   = dedup([...getResults(rounds[0][2]), ...getResults(rounds[1][2])]);
+
+  const allResults = [...vtbResults, ...vrResults, ...dtResults];
 
   const sources: SourceStatus[] = [
     {
       platform: "venezuelatebusca",
       platformName: "Venezuela Te Busca",
-      count: getResults(vtb).length,
-      error: getError(vtb),
+      count: vtbResults.length,
+      error: getError(rounds[0][0]),
     },
     {
       platform: "venezuelareporta",
       platformName: "Venezuela Reporta",
-      count: getResults(vr).length,
-      error: getError(vr),
+      count: vrResults.length,
+      error: getError(rounds[0][1]),
     },
     {
       platform: "desaparecidos",
       platformName: "Desaparecidos Terremoto VE",
-      count: getResults(dt).length,
-      error: getError(dt),
+      count: dtResults.length,
+      error: getError(rounds[0][2]),
     },
   ];
 

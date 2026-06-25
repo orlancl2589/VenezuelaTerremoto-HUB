@@ -103,11 +103,11 @@ async function liveScrape(query: string): Promise<{ vtb: PersonResult[]; vr: Per
 async function getLastScraped(): Promise<string | null> {
   const { data } = await supabase
     .from("scrape_logs")
-    .select("scraped_at")
-    .order("scraped_at", { ascending: false })
+    .select("ran_at")
+    .order("ran_at", { ascending: false })
     .limit(1)
     .single();
-  return data?.scraped_at ?? null;
+  return data?.ran_at ?? null;
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────

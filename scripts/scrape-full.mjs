@@ -144,10 +144,10 @@ async function scrapeAllVR() {
   return total;
 }
 
-// ─── Venezuela Te Busca — alphabet search ────────────────────────────────────
-async function scrapeVTBQuery(query) {
-  const url = query
-    ? `https://venezuelatebusca.com/?q=${encodeURIComponent(query)}`
+// ─── Venezuela Te Busca — full pagination ────────────────────────────────────
+async function scrapeVTBPage(page) {
+  const url = page > 1
+    ? `https://venezuelatebusca.com/?page=${page}`
     : `https://venezuelatebusca.com/`;
   const res = await fetch(url, { headers: HEADERS_SCRAPE, signal: AbortSignal.timeout(20000) });
   if (!res.ok) throw new Error(`VTB HTTP ${res.status}`);
@@ -159,8 +159,8 @@ async function scrapeVTBQuery(query) {
 
   while ((match = cardRegex.exec(html)) !== null) {
     const name = match[1].trim();
-    const cardStart = match.index;
-    const block = html.slice(cardStart, cardStart + 2000);
+    if (!name) continue;
+    const block = html.slice(match.index, match.index + 2000);
 
     const photoMatch = block.match(/img src="(\/media\/photos\/[^"]+)"/);
     const badgeMatch = block.match(/data-variant="([^"]+)"/);
@@ -186,30 +186,38 @@ async function scrapeVTBQuery(query) {
 }
 
 async function scrapeAllVTB() {
-  // VTB returns results per search query — scrape with common first-letter combos
-  const letters = "abcdefghijklmnopqrstuvwxyz".split("");
-  const vowels = ["a", "e", "i", "o", "u"];
-  // Search with each vowel + each letter to cover most names
-  const queries = ["", ...vowels, ...letters];
-  const seenIds = new Set();
   let total = 0;
+  let page = 1;
+  const seenIds = new Set();
 
-  for (const q of queries) {
-    process.stdout.write(`  VTB "${q || "(portada)"}"... `);
+  while (true) {
+    process.stdout.write(`  VTB página ${page}... `);
+    let records;
     try {
-      const records = await scrapeVTBQuery(q);
-      const fresh = records.filter(r => !seenIds.has(r.id));
-      fresh.forEach(r => seenIds.add(r.id));
-      if (fresh.length > 0) {
-        await upsert(fresh);
-        total += fresh.length;
-        console.log(`${fresh.length} nuevos (total: ${total})`);
-      } else {
-        console.log("sin nuevos");
-      }
+      records = await scrapeVTBPage(page);
     } catch (e) {
       console.log(`ERROR: ${e.message}`);
+      break;
     }
+
+    const fresh = records.filter(r => !seenIds.has(r.id));
+    fresh.forEach(r => seenIds.add(r.id));
+
+    if (fresh.length === 0) {
+      console.log("vacía — fin");
+      break;
+    }
+
+    try {
+      await upsert(fresh);
+      total += fresh.length;
+      console.log(`${fresh.length} registros guardados (total: ${total})`);
+    } catch (e) {
+      console.log(`ERROR upsert: ${e.message}`);
+      break;
+    }
+
+    page++;
     await new Promise(r => setTimeout(r, 400));
   }
   return total;
@@ -227,7 +235,7 @@ async function main() {
   console.log("[ Venezuela Reporta — todas las páginas ]");
   const vrTotal = await scrapeAllVR();
 
-  console.log("\n[ Venezuela Te Busca — búsqueda por letras ]");
+  console.log("\n[ Venezuela Te Busca — todas las páginas ]");
   const vtbTotal = await scrapeAllVTB();
 
   await logRun(vtbTotal, vrTotal);

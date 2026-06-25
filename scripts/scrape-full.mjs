@@ -200,8 +200,14 @@ async function scrapeAllVTB() {
       break;
     }
 
-    const fresh = records.filter(r => !seenIds.has(r.id));
-    fresh.forEach(r => seenIds.add(r.id));
+    // Dedup by ID within this page AND across pages (same name → same ID)
+    const fresh = [];
+    for (const r of records) {
+      if (!seenIds.has(r.id)) {
+        seenIds.add(r.id);
+        fresh.push(r);
+      }
+    }
 
     if (fresh.length === 0) {
       console.log("vacía — fin");

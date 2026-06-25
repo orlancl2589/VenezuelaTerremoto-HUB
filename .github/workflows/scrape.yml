@@ -14,4 +14,4 @@ jobs:
           curl -s -X POST \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -w "\nHTTP %{http_code}" \
-            https://venezuela-hub.vercel.app/api/cron/scrape
+            https://venezuelaterremotohub.vercel.app/api/cron/scrape

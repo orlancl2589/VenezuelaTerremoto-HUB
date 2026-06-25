@@ -21,6 +21,21 @@ export const metadata: Metadata = {
     shortcut: "/favicon-32x32.png",
     apple: "/logo.png",
   },
+  openGraph: {
+    title: "Hub de Búsqueda — Terremoto Venezuela 2026",
+    description: "Busca personas desaparecidas o a salvo en todas las plataformas de registro del terremoto en Venezuela al mismo tiempo.",
+    url: "https://buscavenezuela.vercel.app",
+    siteName: "BuscaVenezuela",
+    images: [{ url: "https://buscavenezuela.vercel.app/logo.png", width: 512, height: 512 }],
+    locale: "es_VE",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Hub de Búsqueda — Terremoto Venezuela 2026",
+    description: "Busca personas desaparecidas o a salvo en todas las plataformas de registro del terremoto en Venezuela al mismo tiempo.",
+    images: ["https://buscavenezuela.vercel.app/logo.png"],
+  },
 };
 
 export default function RootLayout({

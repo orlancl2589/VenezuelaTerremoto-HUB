@@ -22,6 +22,8 @@ export default function Home() {
   const [sources, setSources] = useState<SourceStatus[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [searched, setSearched] = useState("");
+  const [lastScraped, setLastScraped] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function search() {
@@ -38,6 +40,8 @@ export default function Home() {
       const data = await res.json();
       setResults(data.results ?? []);
       setSources(data.sources ?? []);
+      setLastScraped(data.lastScraped ?? null);
+      setFromCache(data.fromCache ?? false);
     } catch {
       setResults([]);
     } finally {
@@ -162,13 +166,21 @@ export default function Home() {
             {/* Summary + source filters */}
             <div className="mb-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="text-sm text-gray-600">
-                  <span className="font-bold text-gray-900">
-                    {results.length}
-                  </span>{" "}
-                  resultados para{" "}
-                  <span className="font-semibold">"{searched}"</span>
-                </p>
+                <div>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-bold text-gray-900">{results.length}</span>{" "}
+                    resultados para <span className="font-semibold">"{searched}"</span>
+                  </p>
+                  {lastScraped && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {fromCache ? "📦 Base de datos" : "🌐 Búsqueda en vivo"} ·{" "}
+                      Actualizado{" "}
+                      {new Date(lastScraped).toLocaleString("es-VE", {
+                        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                      })}
+                    </p>
+                  )}
+                </div>
 
                 {/* Source status */}
                 <div className="flex flex-wrap gap-2">

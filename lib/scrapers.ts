@@ -101,11 +101,11 @@ export async function scrapeVR(query = "", page = 1): Promise<PersonRecord[]> {
 
     while ((match = cardRegex.exec(html)) !== null) {
       const uuid = match[1];
-      const block = html.slice(match.index, match.index + 800);
+      const block = html.slice(match.index, match.index + 1500);
 
       const isFound =
-        block.includes("bg-localizado") ||
-        block.includes("Localizado") ||
+        block.includes("bg-encontrado") ||
+        block.includes("Encontrado") ||
         block.includes("A salvo");
 
       const nameMatch = block.match(/<h3[^>]*>([^<]+)<\/h3>/);
@@ -113,20 +113,12 @@ export async function scrapeVR(query = "", page = 1): Promise<PersonRecord[]> {
       const name = nameMatch[1].trim();
 
       const pMatch = block.match(
-        /<p[^>]*class="[^"]*text-ink-soft[^"]*"[^>]*>([\s\S]{0,200}?)<\/p>/
+        /<p[^>]*class="[^"]*text-sm[^"]*text-ink-soft[^"]*"[^>]*>([^<]+)<\/p>/
       );
-      let age: number | null = null;
-      let location: string | null = null;
-      if (pMatch) {
-        const pText = textContent(pMatch[1]);
-        const ageM = pText.match(/(\d{1,3})\s*años/);
-        age = ageM ? parseInt(ageM[1]) : null;
-        const parts = pText.split("·");
-        if (parts.length > 1) location = parts[1].trim() || null;
-      }
+      const location: string | null = pMatch ? pMatch[1].trim() || null : null;
 
       const photoMatch = block.match(
-        /<img[^>]+src="(https?:\/\/[^"]+)"[^>]*alt="[^"]*"/
+        /<img[^>]+src="(https?:\/\/[^"]+)"[^>]*(?:alt="[^"]*")?/
       );
 
       results.push({
@@ -135,7 +127,7 @@ export async function scrapeVR(query = "", page = 1): Promise<PersonRecord[]> {
         name_normalized: normalize(name),
         status: isFound ? "found" : "missing",
         location,
-        age,
+        age: null,
         photo_url: photoMatch?.[1] ?? null,
         detail_url: `https://venezuelareporta.org/reporte/${uuid}`,
         platform: "venezuelareporta",

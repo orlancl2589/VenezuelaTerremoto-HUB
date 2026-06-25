@@ -75,26 +75,18 @@ async function scrapeVRPage(page) {
 
   while ((match = cardRegex.exec(html)) !== null) {
     const uuid = match[1];
-    const block = html.slice(match.index, match.index + 800);
+    const block = html.slice(match.index, match.index + 1500);
 
-    const isFound = block.includes("bg-localizado") || block.includes("Localizado") || block.includes("A salvo");
+    const isFound = block.includes("bg-encontrado") || block.includes("Encontrado") || block.includes("A salvo");
     const nameMatch = block.match(/<h3[^>]*>([^<]+)<\/h3>/);
     if (!nameMatch) continue;
     const name = nameMatch[1].trim();
     if (!name) continue;
 
-    const pMatch = block.match(/<p[^>]*class="[^"]*text-ink-soft[^"]*"[^>]*>([\s\S]{0,200}?)<\/p>/);
-    let age = null;
-    let location = null;
-    if (pMatch) {
-      const pText = textContent(pMatch[1]);
-      const ageM = pText.match(/(\d{1,3})\s*años/);
-      age = ageM ? parseInt(ageM[1]) : null;
-      const parts = pText.split("·");
-      if (parts.length > 1) location = parts[1].trim() || null;
-    }
+    const pMatch = block.match(/<p[^>]*class="[^"]*text-sm[^"]*text-ink-soft[^"]*"[^>]*>([^<]+)<\/p>/);
+    const location = pMatch ? pMatch[1].trim() || null : null;
 
-    const photoMatch = block.match(/<img[^>]+src="(https?:\/\/[^"]+)"[^>]*alt="[^"]*"/);
+    const photoMatch = block.match(/<img[^>]+src="(https?:\/\/[^"]+)"[^>]*(?:alt="[^"]*")?/);
 
     results.push({
       id: `vr:${uuid}`,
@@ -102,7 +94,7 @@ async function scrapeVRPage(page) {
       name_normalized: normalize(name),
       status: isFound ? "found" : "missing",
       location,
-      age,
+      age: null,
       photo_url: photoMatch?.[1] ?? null,
       detail_url: `https://venezuelareporta.org/reporte/${uuid}`,
       platform: "venezuelareporta",

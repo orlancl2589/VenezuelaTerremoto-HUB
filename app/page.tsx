@@ -21,6 +21,7 @@ export default function Home() {
   const [results, setResults] = useState<PersonResult[] | null>(null);
   const [sources, setSources] = useState<SourceStatus[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [activeStatus, setActiveStatus] = useState<"all" | "missing" | "found">("all");
   const [searched, setSearched] = useState("");
   const [lastScraped, setLastScraped] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
@@ -33,6 +34,7 @@ export default function Home() {
     setResults(null);
     setSources([]);
     setActiveFilter("all");
+    setActiveStatus("all");
     setSearched(q);
 
     try {
@@ -55,8 +57,13 @@ export default function Home() {
 
   const filtered =
     results?.filter(
-      (r) => activeFilter === "all" || r.platform === activeFilter
+      (r) =>
+        (activeFilter === "all" || r.platform === activeFilter) &&
+        (activeStatus === "all" || r.status === activeStatus)
     ) ?? [];
+
+  const missingCount = results?.filter((r) => r.status === "missing").length ?? 0;
+  const foundCount = results?.filter((r) => r.status === "found").length ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -203,24 +210,49 @@ export default function Home() {
 
               {/* Filter chips */}
               {results.length > 0 && (
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  <FilterChip
-                    label="Todos"
-                    count={results.length}
-                    active={activeFilter === "all"}
-                    onClick={() => setActiveFilter("all")}
-                  />
-                  {sources
-                    .filter((s) => s.count > 0)
-                    .map((s) => (
-                      <FilterChip
-                        key={s.platform}
-                        label={s.platformName}
-                        count={s.count}
-                        active={activeFilter === s.platform}
-                        onClick={() => setActiveFilter(s.platform)}
-                      />
-                    ))}
+                <div className="flex flex-col gap-2 mt-3">
+                  {/* Status filter */}
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => setActiveStatus("all")}
+                      className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${activeStatus === "all" ? "bg-gray-700 text-white border-gray-700" : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"}`}
+                    >
+                      Todos <span className="opacity-60">({results.length})</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveStatus("missing")}
+                      className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${activeStatus === "missing" ? "bg-red-600 text-white border-red-600" : "bg-white text-red-600 border-red-300 hover:border-red-400"}`}
+                    >
+                      Desaparecidos <span className="opacity-60">({missingCount})</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveStatus("found")}
+                      className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${activeStatus === "found" ? "bg-green-600 text-white border-green-600" : "bg-white text-green-700 border-green-300 hover:border-green-400"}`}
+                    >
+                      Localizados <span className="opacity-60">({foundCount})</span>
+                    </button>
+                  </div>
+
+                  {/* Platform filter */}
+                  <div className="flex gap-2 flex-wrap">
+                    <FilterChip
+                      label="Todas las fuentes"
+                      count={results.length}
+                      active={activeFilter === "all"}
+                      onClick={() => setActiveFilter("all")}
+                    />
+                    {sources
+                      .filter((s) => s.count > 0)
+                      .map((s) => (
+                        <FilterChip
+                          key={s.platform}
+                          label={s.platformName}
+                          count={s.count}
+                          active={activeFilter === s.platform}
+                          onClick={() => setActiveFilter(s.platform)}
+                        />
+                      ))}
+                  </div>
                 </div>
               )}
             </div>

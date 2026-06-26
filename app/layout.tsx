@@ -21,6 +21,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon-32x32.png",
     apple: "/logo.png",
   },
+  verification: {
+    google: "v_IEZ_pRgvcXyPUptoP15JNVCZMXiNrGjR5-t_ae46Y",
+  },
   openGraph: {
     title: "Hub de Búsqueda — Terremoto Venezuela 2026",
     description: "Busca personas desaparecidas o a salvo en todas las plataformas de registro del terremoto en Venezuela al mismo tiempo.",

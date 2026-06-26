@@ -234,7 +234,7 @@ async function scrapeAllVTB() {
     }
 
     page++;
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 200));
   }
   return total;
 }

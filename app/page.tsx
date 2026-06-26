@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { PersonResult, SourceStatus } from "./api/search/route";
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -15,6 +15,13 @@ const PLATFORM_URLS: Record<string, string> = {
   desaparecidos: "https://desaparecidosterremotovenezuela.com",
 };
 
+type Stats = {
+  total: number;
+  found: number;
+  missing: number;
+  lastScraped: string | null;
+};
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +32,16 @@ export default function Home() {
   const [searched, setSearched] = useState("");
   const [lastScraped, setLastScraped] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  const heroInputRef = useRef<HTMLInputElement>(null);
+  const stickyInputRef = useRef<HTMLInputElement>(null);
+
+  const isHero = results === null && !loading;
+
+  useEffect(() => {
+    fetch("/api/stats").then((r) => r.json()).then(setStats).catch(() => {});
+  }, []);
 
   async function search() {
     const q = query.trim();
@@ -65,17 +81,27 @@ export default function Home() {
   const missingCount = results?.filter((r) => r.status === "missing").length ?? 0;
   const foundCount = results?.filter((r) => r.status === "found").length ?? 0;
 
+  function relativeTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "hace un momento";
+    if (mins < 60) return `hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `hace ${hrs} h`;
+    return `hace ${Math.floor(hrs / 24)} días`;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <header className="bg-[#002664] text-white">
         <div className="h-1 bg-[#CF142B]" />
         <div className="h-1 bg-[#F4C300]" />
-        <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="VE Hub" className="h-12 w-12 object-contain" />
+            <img src="/logo.png" alt="VE Hub" className="h-10 w-10 object-contain" />
             <div>
-              <h1 className="text-xl font-bold leading-tight">
+              <h1 className="text-lg font-bold leading-tight">
                 Hub de Búsqueda — Terremoto Venezuela 2026
               </h1>
               <p className="text-blue-200 text-xs mt-0.5">
@@ -86,19 +112,93 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Search bar — sticky */}
-      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4">
+      {/* Hero — visible before first search */}
+      {isHero && (
+        <div className="bg-[#002664] text-white pb-10 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8 pt-4">
+              <p className="text-blue-300 text-xs font-semibold uppercase tracking-widest mb-3">
+                Base de datos centralizada · {stats ? stats.total.toLocaleString("es-VE") : "…"} registros
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-3 leading-tight">
+                Busca a tus seres queridos
+              </h2>
+              <p className="text-blue-200 text-sm sm:text-base max-w-md mx-auto">
+                Concentramos los registros de múltiples plataformas en un solo lugar
+              </p>
+            </div>
+
+            {/* Hero search bar */}
+            <div className="flex gap-2 bg-white rounded-2xl p-2 shadow-2xl shadow-black/40 mb-8">
+              <input
+                ref={heroInputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Nombre, apellido o cédula…"
+                className="flex-1 text-gray-900 text-base sm:text-lg px-4 py-3 rounded-xl outline-none placeholder:text-gray-400 bg-transparent"
+                autoFocus
+              />
+              <button
+                onClick={search}
+                disabled={query.trim().length < 2}
+                className="bg-[#CF142B] hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition-colors text-base shrink-0"
+              >
+                Buscar
+              </button>
+            </div>
+
+            {/* Stats cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-white">
+                  {stats ? stats.total.toLocaleString("es-VE") : <span className="animate-pulse">…</span>}
+                </p>
+                <p className="text-blue-200 text-xs mt-1 leading-tight">Registros centralizados</p>
+              </div>
+              <div className="bg-red-900/40 border border-red-700/40 rounded-xl p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-white">
+                  {stats ? stats.missing.toLocaleString("es-VE") : <span className="animate-pulse">…</span>}
+                </p>
+                <p className="text-red-200 text-xs mt-1 leading-tight">Aún desaparecidos</p>
+              </div>
+              <div className="bg-green-900/40 border border-green-700/40 rounded-xl p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-white">
+                  {stats ? stats.found.toLocaleString("es-VE") : <span className="animate-pulse">…</span>}
+                </p>
+                <p className="text-green-200 text-xs mt-1 leading-tight">Localizados</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
+                <p className="text-sm font-semibold text-white leading-tight">
+                  {stats?.lastScraped ? relativeTime(stats.lastScraped) : <span className="animate-pulse">…</span>}
+                </p>
+                <p className="text-blue-200 text-xs mt-1 leading-tight">Última actualización</p>
+                {stats?.lastScraped && (
+                  <p className="text-white/40 text-xs mt-0.5">
+                    {new Date(stats.lastScraped).toLocaleString("es-VE", {
+                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky search bar — visible after search or during loading */}
+      <div className={`bg-white border-b shadow-sm sticky top-0 z-10 ${isHero ? "hidden" : ""}`}>
+        <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2">
             <input
-              ref={inputRef}
+              ref={stickyInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Nombre, cédula o apellido..."
               className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-base text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:border-[#002664] transition-colors"
-              autoFocus
             />
             <button
               onClick={search}
@@ -112,50 +212,12 @@ export default function Home() {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {/* Initial state */}
-        {results === null && !loading && (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="text-lg font-medium text-gray-600">
-              Busca a una persona por nombre o cédula
-            </p>
-            <p className="text-sm mt-1">
-              Se consultarán 3 plataformas al mismo tiempo
-            </p>
-
-            {/* Platform links */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              {Object.entries(PLATFORM_URLS).map(([key, url]) => (
-                <a
-                  key={key}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs border rounded-full px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
-                >
-                  {key === "venezuelatebusca"
-                    ? "Venezuela Te Busca"
-                    : key === "venezuelareporta"
-                    ? "Venezuela Reporta"
-                    : "Desaparecidos Terremoto VE"}
-                  ↗
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Loading skeletons */}
         {loading && (
           <div className="space-y-3">
-            <div className="text-sm text-gray-500 mb-4">
-              Consultando plataformas…
-            </div>
+            <div className="text-sm text-gray-500 mb-4">Consultando plataformas…</div>
             {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white border rounded-xl p-4 flex gap-4 animate-pulse"
-              >
+              <div key={i} className="bg-white border rounded-xl p-4 flex gap-4 animate-pulse">
                 <div className="w-14 h-14 bg-gray-200 rounded-lg shrink-0" />
                 <div className="flex-1 space-y-2 py-1">
                   <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -314,10 +376,7 @@ export default function Home() {
             ].map((e) => (
               <div key={e.label}>
                 <p className="text-xs text-gray-400">{e.label}</p>
-                <a
-                  href={`tel:${e.num}`}
-                  className="font-bold text-[#002664] hover:underline"
-                >
+                <a href={`tel:${e.num}`} className="font-bold text-[#002664] hover:underline">
                   {e.num}
                 </a>
               </div>
@@ -381,9 +440,7 @@ function ResultCard({ result }: { result: PersonResult }) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 flex-wrap">
-          <h3 className="font-semibold text-gray-900 leading-tight">
-            {result.name}
-          </h3>
+          <h3 className="font-semibold text-gray-900 leading-tight">{result.name}</h3>
           <span
             className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
               result.status === "found"

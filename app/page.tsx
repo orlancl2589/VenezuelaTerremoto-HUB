@@ -196,6 +196,47 @@ export default function Home() {
         </div>
       )}
 
+      {/* Map section — visible on hero state */}
+      {isHero && (
+        <section className="bg-white border-b">
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <h2 className="text-base font-semibold text-gray-900">
+                Mapa de Daños Estructurales
+              </h2>
+              <a
+                href="https://terremotovenezuela.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-[#002664] border border-[#002664] rounded-full px-3 py-1 hover:bg-[#002664] hover:text-white transition-colors"
+              >
+                Abrir sitio completo ↗
+              </a>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+              <iframe
+                src="https://terremotovenezuela.com"
+                className="w-full"
+                style={{ height: "520px" }}
+                title="Mapa de Daños Estructurales"
+                loading="lazy"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-right">
+              Fuente:{" "}
+              <a
+                href="https://terremotovenezuela.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                terremotovenezuela.com
+              </a>
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Sticky search bar — visible after search or during loading */}
       <div className={`bg-white border-b shadow-sm sticky top-0 z-10 ${isHero ? "hidden" : ""}`}>
         <div className="max-w-3xl mx-auto px-4 py-3">

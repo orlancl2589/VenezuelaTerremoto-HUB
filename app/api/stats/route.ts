@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export const revalidate = 300; // cache 5 min on Vercel CDN
+export const revalidate = 0; // always fresh — no CDN cache
 
 export async function GET() {
   const [totalRes, foundRes, logRes] = await Promise.all([

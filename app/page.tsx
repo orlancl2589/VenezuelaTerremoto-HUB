@@ -213,11 +213,14 @@ export default function Home() {
                 Abrir sitio completo ↗
               </a>
             </div>
-            <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+            {/* overflow:hidden + negative margin-top recorta la barra de búsqueda y filtros del sitio externo */}
+            <div
+              className="rounded-xl overflow-hidden border border-gray-200 shadow-sm"
+              style={{ height: "540px" }}
+            >
               <iframe
                 src="https://terremotovenezuela.com"
-                className="w-full"
-                style={{ height: "520px" }}
+                style={{ width: "100%", height: "730px", marginTop: "-190px", border: "none" }}
                 title="Mapa de Daños Estructurales"
                 loading="lazy"
               />

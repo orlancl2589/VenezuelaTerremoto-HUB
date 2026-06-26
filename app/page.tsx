@@ -220,7 +220,8 @@ export default function Home() {
             >
               <iframe
                 src="https://terremotovenezuela.com"
-                style={{ width: "100%", height: "730px", marginTop: "-190px", border: "none" }}
+                scrolling="no"
+                style={{ width: "100%", height: "730px", marginTop: "-190px", border: "none", overflow: "hidden" }}
                 title="Mapa de Daños Estructurales"
                 loading="lazy"
               />

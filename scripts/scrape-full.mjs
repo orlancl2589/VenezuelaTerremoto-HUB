@@ -49,7 +49,7 @@ async function upsert(records) {
   return records.length;
 }
 
-async function logRun(vtb, vr) {
+async function logRun(vtb, vr, mode = "full-gh-actions") {
   await fetch(`${SUPABASE_URL}/rest/v1/scrape_logs`, {
     method: "POST",
     headers: {
@@ -57,7 +57,7 @@ async function logRun(vtb, vr) {
       Authorization: `Bearer ${SERVICE_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ vtb_count: vtb, vr_count: vr, total_count: vtb + vr, mode: "full-gh-actions" }),
+    body: JSON.stringify({ vtb_count: vtb, vr_count: vr, total_count: vtb + vr, mode }),
   });
 }
 
@@ -65,7 +65,7 @@ async function logRun(vtb, vr) {
 async function scrapeVRPage(page) {
   const params = page > 1 ? `?page=${page}` : "";
   const url = `https://venezuelareporta.org/buscar${params}`;
-  const res = await fetch(url, { headers: HEADERS_SCRAPE, signal: AbortSignal.timeout(20000) });
+  const res = await fetch(url, { headers: HEADERS_SCRAPE, signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`VR HTTP ${res.status}`);
   const html = await res.text();
 
@@ -107,6 +107,7 @@ async function scrapeVRPage(page) {
 async function scrapeAllVR() {
   let total = 0;
   let page = 1;
+  let consecutiveErrors = 0;
   const seenIds = new Set();
 
   while (true) {
@@ -114,9 +115,15 @@ async function scrapeAllVR() {
     let records;
     try {
       records = await scrapeVRPage(page);
+      consecutiveErrors = 0;
     } catch (e) {
       console.log(`ERROR: ${e.message}`);
-      break;
+      consecutiveErrors++;
+      if (consecutiveErrors >= 5) {
+        console.log("  5 errores consecutivos — abortando VR");
+        break;
+      }
+      continue;
     }
 
     // Dedup within this run
@@ -241,13 +248,17 @@ async function main() {
 
   console.log("=== Scrape completo iniciado ===\n");
 
+  // Log al inicio para que "última actualización" muestre cuándo arrancó el scraper
+  await logRun(0, 0, "start");
+
   console.log("[ Venezuela Reporta — todas las páginas ]");
   const vrTotal = await scrapeAllVR();
+  await logRun(0, vrTotal, "vr-done");
 
   console.log("\n[ Venezuela Te Busca — todas las páginas ]");
   const vtbTotal = await scrapeAllVTB();
 
-  await logRun(vtbTotal, vrTotal);
+  await logRun(vtbTotal, vrTotal, "full-gh-actions");
 
   console.log(`\n=== Finalizado: ${vtbTotal} VTB + ${vrTotal} VR = ${vtbTotal + vrTotal} total ===`);
 }

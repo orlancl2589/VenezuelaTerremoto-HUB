@@ -71,6 +71,15 @@ export default function Home() {
     if (e.key === "Enter") search();
   }
 
+  function resetToHome() {
+    setResults(null);
+    setQuery("");
+    setSources([]);
+    setSearched("");
+    setActiveFilter("all");
+    setActiveStatus("all");
+  }
+
   const filtered =
     results?.filter(
       (r) =>
@@ -190,7 +199,14 @@ export default function Home() {
       {/* Sticky search bar — visible after search or during loading */}
       <div className={`bg-white border-b shadow-sm sticky top-0 z-10 ${isHero ? "hidden" : ""}`}>
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={resetToHome}
+              title="Volver al inicio"
+              className="shrink-0 hover:opacity-70 transition-opacity"
+            >
+              <img src="/logo.png" alt="Inicio" className="h-8 w-8 object-contain" />
+            </button>
             <input
               ref={stickyInputRef}
               type="text"

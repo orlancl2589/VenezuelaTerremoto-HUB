@@ -38,6 +38,23 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Hub de Búsqueda — Terremoto Venezuela 2026",
+  url: "https://buscavenezuela.vercel.app",
+  description:
+    "Busca personas desaparecidas o localizadas tras el terremoto de Venezuela 2026. Centralizamos los registros de Venezuela Te Busca y Venezuela Reporta.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://buscavenezuela.vercel.app/?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -50,6 +67,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">{children}</body>
       <GoogleAnalytics gaId="G-7561Y7CJ6H" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </html>
   );
 }

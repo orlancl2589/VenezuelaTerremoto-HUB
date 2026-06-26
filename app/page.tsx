@@ -192,6 +192,12 @@ export default function Home() {
                 )}
               </div>
             </div>
+
+          <p className="text-center text-blue-300/70 text-xs mt-6 max-w-lg mx-auto leading-relaxed">
+            Centralizamos los registros de personas desaparecidas y localizadas
+            tras el <strong className="text-blue-200">terremoto de Venezuela del 25 de junio de 2026</strong>.
+            Consulta simultáneamente Venezuela Te Busca, Venezuela Reporta y más plataformas de registro de víctimas.
+          </p>
           </div>
         </div>
       )}
